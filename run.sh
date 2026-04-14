@@ -33,8 +33,27 @@ if [[ "${1:-}" == "--setup" ]]; then
 fi
 
 # ─── --test : 動作確認 ──────────────────────────────────────
+# ※ singularity test は .def ビルド時のみ有効。
+#   Docker/GHCR 経由の SIF には %test が存在しないため
+#   singularity exec で直接スクリプトを実行する。
 if [[ "${1:-}" == "--test" ]]; then
-    singularity test "${SIF}"
+    singularity exec --nv "${SIF}" python3 - <<'PYEOF'
+import sys, torch, insightface
+from facenet_pytorch import InceptionResnetV1
+import cv2, numpy as np
+
+print(f"PyTorch     : {torch.__version__}")
+print(f"CUDA 利用可 : {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    print(f"GPU         : {torch.cuda.get_device_name(0)}")
+print(f"InsightFace : {insightface.__version__}")
+print(f"OpenCV      : {cv2.__version__}")
+print(f"numpy       : {np.__version__}")
+_ = InceptionResnetV1(pretrained=None)   # モデル構造だけ確認（重みは不要）
+print("facenet-pytorch : OK")
+print("─────────────────────────────")
+print("ALL OK")
+PYEOF
     exit 0
 fi
 
