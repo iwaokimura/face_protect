@@ -158,7 +158,7 @@ singularity pull face_protect.sif \
 
 | パラメータ | デフォルト | 説明 |
 |---|---|---|
-| `--epsilon` | `0.0392` (10/255) | L∞ 摂動上限 |
+| `--epsilon` | `0.0392` (10/255) | $L^\infty$ 摂動上限 |
 | `--iterations` | `150` | PGD 反復回数 |
 | `--step-size` | `0.00588` | PGD ステップサイズ |
 | `--padding` | `0.40` | 顔クロップパディング率 |
