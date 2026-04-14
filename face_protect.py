@@ -77,8 +77,11 @@ class ModelManager:
         try:
             if cache.exists():
                 model = InceptionResnetV1(classify=False)
+                # strict=False: 保存時に含まれる logits.weight/bias を無視
+                # (pretrained モデルは classify=True で保存されているため)
                 model.load_state_dict(
-                    torch.load(str(cache), map_location="cpu", weights_only=True)
+                    torch.load(str(cache), map_location="cpu", weights_only=True),
+                    strict=False,
                 )
             else:
                 print(f"[download] facenet-pytorch ({dataset}) ...")
