@@ -66,6 +66,9 @@ RUN git clone --depth=1 --filter=blob:none --sparse \
 # ─── パイプライン ──────────────────────────────────────────────
 COPY face_protect.py /opt/face_protect.py
 
+# -- check similarity ---
+COPY cosine_similarity.py /opt/cosine_similarity.py
+
 # ─── ビルド確認 ────────────────────────────────────────────────
 RUN python3 -c "\
 import torch, insightface; \

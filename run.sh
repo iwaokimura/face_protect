@@ -65,6 +65,19 @@ if [[ "${1:-}" == "--pull" ]]; then
     exit 0
 fi
 
+# ─── --exec : コンテナ内で任意コマンドを実行 ────────────────
+# 使用例:
+#   ./run.sh --exec python3 /opt/cosine_similarity.py orig.jpg prot.png
+#   ./run.sh --exec bash
+#   ./run.sh --exec python3 --version
+if [[ "${1:-}" == "--exec" ]]; then
+    shift   # --exec を除いた残りの引数をコマンドとして渡す
+    singularity exec --nv \
+        --bind "${MODELS_DIR}:/models" \
+        "${SIF}" "$@"
+    exit 0
+fi
+
 # ─── 通常実行 ───────────────────────────────────────────────
 INPUT_PATH="${1:-}"
 OUTPUT_DIR="${2:-${SCRIPT_DIR}/output}"
@@ -74,6 +87,7 @@ if [[ -z "${INPUT_PATH}" ]]; then
     echo "  ./run.sh --pull                          # SIF を最新版に更新"
     echo "  ./run.sh --setup                         # モデルのダウンロード（初回）"
     echo "  ./run.sh --test                          # 動作確認"
+  echo "  ./run.sh --exec <cmd> [args...]          # コンテナ内で任意コマンド実行"
     echo "  ./run.sh <入力パス> [出力ディレクトリ]  # 処理実行"
     echo ""
     echo "処理オプション例:"
