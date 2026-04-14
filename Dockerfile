@@ -2,7 +2,7 @@
 # GitHub Actions でビルドされ GHCR に push されるイメージ
 # リポジトリ: https://github.com/iwaokimura/face_protect
 
-FROM nvidia/cuda:12.4.1-cudnn9-runtime-ubuntu22.04
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
 
 LABEL org.opencontainers.image.source="https://github.com/iwaokimura/face_protect"
 LABEL org.opencontainers.image.description="Adversarial perturbation for face recognition evasion"
