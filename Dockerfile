@@ -22,6 +22,7 @@ RUN apt-get update -qq && \
         libsm6 libxext6 libxrender-dev \
         libgomp1 libjpeg-turbo8 libpng16-16 \
         cmake \
+	build-essential \
         wget curl ca-certificates git && \
     rm -rf /var/lib/apt/lists/*
 
