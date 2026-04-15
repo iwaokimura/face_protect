@@ -182,4 +182,19 @@ singularity pull face_protect.sif \
 標準セットアップでは，InsightFace の `buffalo_l` パッケージに含まれる ArcFace 認識 ONNX をそのまま攻撃対象として使います．
 追加の ArcFace 重みを手動配置しなくても，評価系に近い ArcFace をデフォルトで含めたアンサンブルになります．
 
+ArcFace R50 がまだプロジェクトディレクトリに存在しない場合は，まず `./run.sh --setup` または `./run_docker.sh --setup` を実行してください．
+この処理で InsightFace `buffalo_l` が取得され，ArcFace R50 ONNX は通常 `./models/insightface/models/buffalo_l/w600k_r50.onnx` に保存されます．
+
+手動で取得状況を確認したい場合は，次を確認してください．
+
+```bash
+ls ./models/insightface/models/buffalo_l/
+# 期待例: det_10g.onnx  genderage.onnx  w600k_r50.onnx  2d106det.onnx
+```
+
+`w600k_r50.onnx` が無い場合は，`models/` を削除せずに再度 `--setup` を実行してください．
+ネットワーク制限などで自動取得できない環境では，InsightFace の `buffalo_l` 一式を取得して上記ディレクトリへ配置する必要があります．
+
+ArcFace ONNX をロードできない場合は，FaceNet のみで静かに続行せず，初期化時に明示的に失敗します．
+
 攻撃開始時には，実際にロードした攻撃モデル一覧と，想定している評価モデルがログに表示されます．
