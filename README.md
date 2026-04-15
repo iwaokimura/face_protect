@@ -54,7 +54,7 @@ docker pull ghcr.io/iwaokimura/face_protect:latest
 
 ```bash
 ./run_docker.sh --setup
-# → ./models/ に InsightFace buffalo_l, FaceNet 重みを保存（合計 ~700MB）
+# → ./models/ に InsightFace buffalo_l, FaceNet 重みを保存（buffalo_l 内の ArcFace ONNX も利用）
 ```
 
 ### 使用方法（Docker）
@@ -131,7 +131,7 @@ singularity pull face_protect.sif \
 
 ```bash
 ./run.sh --setup
-# → ./models/ に InsightFace buffalo_l, FaceNet 重みを保存（合計 ~700MB）
+# → ./models/ に InsightFace buffalo_l, FaceNet 重みを保存（buffalo_l 内の ArcFace ONNX も利用）
 ```
 
 ---
@@ -177,8 +177,9 @@ singularity pull face_protect.sif \
 
 ---
 
-## ArcFace 重みの追加（オプション・保護強度向上）
+## ArcFace 重み（標準攻撃対象）
 
-InsightFace model_zoo から `ms1mv3_arcface_r50_fp16.pth` を取得し，
-`models/arcface_r50_ms1mv3.pth` として配置するとアンサンブルに追加されます．
-https://github.com/deepinsight/insightface/tree/master/model_zoo
+標準セットアップでは，InsightFace の `buffalo_l` パッケージに含まれる ArcFace 認識 ONNX をそのまま攻撃対象として使います．
+追加の ArcFace 重みを手動配置しなくても，評価系に近い ArcFace をデフォルトで含めたアンサンブルになります．
+
+攻撃開始時には，実際にロードした攻撃モデル一覧と，想定している評価モデルがログに表示されます．

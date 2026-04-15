@@ -43,7 +43,9 @@ RUN python3 -m pip install --no-cache-dir \
 # ─── InsightFace + ONNX Runtime ────────────────────────────────
 RUN python3 -m pip install --no-cache-dir \
     "insightface==0.7.3" \
-    "onnxruntime-gpu==1.20.1"
+    "onnxruntime-gpu==1.20.1" \
+    "onnx" \
+    "onnx2torch"
 
 # ─── facenet-pytorch (--no-deps で torch バージョン制約をスキップ) ─
 RUN python3 -m pip install --no-cache-dir requests tqdm && \
@@ -54,14 +56,6 @@ RUN python3 -m pip install --no-cache-dir requests tqdm && \
 RUN python3 -m pip install --no-cache-dir \
     scipy lpips rich && \
     python3 -m pip cache purge
-
-# ─── ArcFace PyTorch バックボーン ──────────────────────────────
-RUN git clone --depth=1 --filter=blob:none --sparse \
-        https://github.com/deepinsight/insightface.git /tmp/insightface_src && \
-    cd /tmp/insightface_src && \
-    git sparse-checkout set recognition/arcface_torch && \
-    cp -r recognition/arcface_torch /opt/arcface_torch && \
-    cd / && rm -rf /tmp/insightface_src
 
 # ─── パイプライン ──────────────────────────────────────────────
 COPY face_protect.py /opt/face_protect.py

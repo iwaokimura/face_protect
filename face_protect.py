@@ -26,6 +26,7 @@ DEFAULT_PAD  = 0.40        # 顔クロップパディング率
 DETECT_SIZE  = (1280, 1280)  # 高解像度対応の検出サイズ
 MIN_FACE_PX  = 60          # 処理対象とする最小顔幅 (px)
 SUPPORTED_EXT = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
+ARCFACE_ONNX_NAMES = ("w600k_r50.onnx", "glintr100.onnx")
 
 
 # ─── モデル管理 ────────────────────────────────────────────────
@@ -55,13 +56,13 @@ class ModelManager:
     # ── 攻撃モデル (アンサンブル) ──────────────────────────────
     def get_attack_models(self) -> List[Tuple[str, torch.nn.Module]]:
         if not self._attack_models:
+            m3 = self._load_arcface_iresnet()
+            if m3 is not None:
+                self._attack_models.append(("arcface_r50", m3))
             for ds in ("vggface2", "casia-webface"):
                 m = self._load_facenet(ds)
                 if m is not None:
                     self._attack_models.append((f"facenet_{ds[:3]}", m))
-            m3 = self._load_arcface_iresnet()
-            if m3 is not None:
-                self._attack_models.append(("arcface_r50", m3))
             if not self._attack_models:
                 raise RuntimeError(
                     "攻撃モデルが1つもロードできません。"
@@ -93,31 +94,40 @@ class ModelManager:
             return None
 
     def _load_arcface_iresnet(self):
-        weight = self.models_dir / "arcface_r50_ms1mv3.pth"
         try:
-            sys.path.insert(0, "/opt/arcface_torch")
-            from backbones import get_model
-            model = get_model("r50", fp16=False)
-            if weight.exists():
-                model.load_state_dict(
-                    torch.load(str(weight), map_location="cpu", weights_only=True),
-                    strict=False,
-                )
-                return model.eval().to(self.device)
-            else:
-                print("[info] arcface_r50 重みなし → facenet のみで動作します")
-                return None
+            from onnx import load as onnx_load
+            from onnx2torch import convert
+
+            onnx_path = self._find_arcface_onnx()
+            model = convert(onnx_load(str(onnx_path)))
+            return model.eval().to(self.device)
         except Exception as e:
             print(f"[warn] ArcFace IResNet ロード失敗: {e}")
             return None
 
+    def _find_arcface_onnx(self) -> Path:
+        self.get_detector()
+        search_root = self.models_dir / "insightface"
+        for name in ARCFACE_ONNX_NAMES:
+            matches = list(search_root.rglob(name))
+            if matches:
+                return matches[0]
+        raise RuntimeError(
+            f"ArcFace ONNX が見つかりません: names={ARCFACE_ONNX_NAMES} root={search_root}"
+        )
+
     def download_all(self):
         print("=== モデルのダウンロード開始 ===")
-        print("[1/3] InsightFace buffalo_l ...")
+        print("[1/4] InsightFace buffalo_l ...")
         self.get_detector()
         print("      → 完了")
-        for i, ds in enumerate(("vggface2", "casia-webface"), start=2):
-            print(f"[{i}/3] facenet-pytorch ({ds}) ...")
+        print("[2/4] arcface_r50 (buffalo_l ONNX) ...")
+        model = self._load_arcface_iresnet()
+        if model is None:
+            raise RuntimeError("ArcFace ONNX の取得またはロードに失敗しました。")
+        print("      → 完了")
+        for i, ds in enumerate(("vggface2", "casia-webface"), start=3):
+            print(f"[{i}/4] facenet-pytorch ({ds}) ...")
             self._load_facenet(ds)
             print("      → 完了")
         print(f"\n保存先: {self.models_dir}")
@@ -135,6 +145,8 @@ def preprocess(model_name: str, x: torch.Tensor) -> torch.Tensor:
 def embed(model_name: str, model: torch.nn.Module,
           x: torch.Tensor) -> torch.Tensor:
     e = model(preprocess(model_name, x))
+    if isinstance(e, (tuple, list)):
+        e = e[0]
     return F.normalize(e, p=2, dim=1)
 
 
@@ -170,11 +182,12 @@ def pgd_attack(
         adv  = (ct + delta).clamp(0.0, 1.0)
         ablur = gaussian_blur(adv)
 
-        loss = sum(
-            (F.cosine_similarity(embed(n, m, adv),  refs[n]).mean() +
+        losses = [
+            (F.cosine_similarity(embed(n, m, adv), refs[n]).mean() +
              F.cosine_similarity(embed(n, m, ablur), refs[n]).mean()) * 0.5
             for n, m in models
-        ) / len(models)
+        ]
+        loss = torch.stack(losses).mean()
 
         loss.backward()
         with torch.no_grad():
@@ -390,7 +403,10 @@ def main():
 
     print("[init] モデルをロード中 ...")
     mgr.get_detector()
-    mgr.get_attack_models()
+    attack_models = mgr.get_attack_models()
+    attack_names = [name for name, _ in attack_models]
+    print(f"[init] 攻撃モデル: {attack_names}")
+    print("[init] 評価モデル: insightface/buffalo_l (ArcFace 系) を想定")
     print("[init] 準備完了。\n")
 
     process_batch(
