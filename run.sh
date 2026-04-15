@@ -21,11 +21,13 @@ fi
 
 mkdir -p "${MODELS_DIR}"
 
+MODEL_BINDS=(--bind "${MODELS_DIR}:/models")
+
 # ─── --setup : モデルダウンロード ───────────────────────────
 if [[ "${1:-}" == "--setup" ]]; then
     echo -e "${GREEN}[setup]${NC} モデルをダウンロードしています..."
     singularity exec --nv \
-        --bind "${MODELS_DIR}:/models" \
+        "${MODEL_BINDS[@]}" \
         "${SIF}" \
         python3 /opt/face_protect.py --download-models --models /models
     echo -e "${GREEN}[setup 完了]${NC} 保存先: ${MODELS_DIR}"
@@ -73,7 +75,7 @@ fi
 if [[ "${1:-}" == "--exec" ]]; then
     shift   # --exec を除いた残りの引数をコマンドとして渡す
     singularity exec --nv \
-        --bind "${MODELS_DIR}:/models" \
+        "${MODEL_BINDS[@]}" \
         "${SIF}" "$@"
     exit 0
 fi
@@ -119,7 +121,7 @@ echo "  モデル: ${MODELS_DIR}"
 echo ""
 
 singularity run --nv \
-    --bind "${MODELS_DIR}:/models" \
+    "${MODEL_BINDS[@]}" \
     --bind "${BIND_INPUT}" \
     --bind "${OUTPUT_ABS}:/data/output" \
     "${SIF}" \

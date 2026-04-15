@@ -21,11 +21,13 @@ fi
 
 mkdir -p "${MODELS_DIR}"
 
+MODEL_VOLUMES=(-v "${MODELS_DIR}:/models")
+
 # ─── --setup : モデルダウンロード ───────────────────────────
 if [[ "${1:-}" == "--setup" ]]; then
     echo -e "${GREEN}[setup]${NC} モデルをダウンロードしています..."
     docker run --rm --gpus all \
-        -v "${MODELS_DIR}:/models" \
+        "${MODEL_VOLUMES[@]}" \
         "${IMAGE}" \
         --download-models --models /models
     echo -e "${GREEN}[setup 完了]${NC} 保存先: ${MODELS_DIR}"
@@ -74,7 +76,7 @@ if [[ "${1:-}" == "--exec" ]]; then
     EXEC_BIN="${1}"; shift   # 最初の引数を entrypoint に
     docker run --rm -i --gpus all \
         --entrypoint "${EXEC_BIN}" \
-        -v "${MODELS_DIR}:/models" \
+        "${MODEL_VOLUMES[@]}" \
         "${IMAGE}" "$@"
     exit 0
 fi
@@ -121,7 +123,7 @@ echo "  モデル: ${MODELS_DIR}"
 echo ""
 
 docker run --rm --gpus all \
-    -v "${MODELS_DIR}:/models" \
+    "${MODEL_VOLUMES[@]}" \
     -v "${BIND_INPUT}" \
     -v "${OUTPUT_ABS}:/data/output" \
     "${IMAGE}" \

@@ -31,7 +31,11 @@ ARCFACE_ONNX_NAMES = ("w600k_r50.onnx", "glintr100.onnx")
 
 # ─── モデル管理 ────────────────────────────────────────────────
 class ModelManager:
-    def __init__(self, models_dir: str, device: torch.device):
+    def __init__(
+        self,
+        models_dir: str,
+        device: torch.device,
+    ):
         self.models_dir = Path(models_dir)
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.device = device
@@ -57,17 +61,16 @@ class ModelManager:
     def get_attack_models(self) -> List[Tuple[str, torch.nn.Module]]:
         if not self._attack_models:
             m3 = self._load_arcface_iresnet()
-            if m3 is not None:
-                self._attack_models.append(("arcface_r50", m3))
+            if m3 is None:
+                raise RuntimeError(
+                    "ArcFace 攻撃モデルをロードできません。"
+                    " root の model.onnx または buffalo_l 内蔵 ONNX を確認してください。"
+                )
+            self._attack_models.append(("arcface_r50", m3))
             for ds in ("vggface2", "casia-webface"):
                 m = self._load_facenet(ds)
                 if m is not None:
                     self._attack_models.append((f"facenet_{ds[:3]}", m))
-            if not self._attack_models:
-                raise RuntimeError(
-                    "攻撃モデルが1つもロードできません。"
-                    " --download-models を先に実行してください。"
-                )
             names = [n for n, _ in self._attack_models]
             print(f"[model] アンサンブル構成: {names}")
         return self._attack_models
@@ -99,6 +102,7 @@ class ModelManager:
             from onnx2torch import convert
 
             onnx_path = self._find_arcface_onnx()
+            print(f"[model] ArcFace ONNX: {onnx_path}")
             model = convert(onnx_load(str(onnx_path)))
             return model.eval().to(self.device)
         except Exception as e:
