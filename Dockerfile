@@ -43,7 +43,9 @@ RUN python3 -m pip install --no-cache-dir \
 # ─── InsightFace + ONNX Runtime ────────────────────────────────
 RUN python3 -m pip install --no-cache-dir \
     "insightface==0.7.3" \
-    "onnxruntime-gpu==1.20.1"
+    "onnxruntime-gpu==1.20.1" \
+    "onnx>=1.16.0" \
+    "onnx2torch>=2.1.0"
 
 # ─── facenet-pytorch (--no-deps で torch バージョン制約をスキップ) ─
 RUN python3 -m pip install --no-cache-dir requests tqdm && \

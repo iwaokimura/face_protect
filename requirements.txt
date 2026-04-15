@@ -4,6 +4,8 @@ torchvision==0.20.1
 torchaudio==2.5.1
 insightface==0.7.3
 onnxruntime-gpu==1.20.1
+onnx>=1.16.0
+onnx2torch>=2.1.0
 facenet-pytorch==2.6.0
 opencv-python-headless
 Pillow

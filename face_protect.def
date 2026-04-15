@@ -67,7 +67,9 @@ From: nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
     # InsightFace + ONNX Runtime
     python3 -m pip install --no-cache-dir \
         "insightface==0.7.3" \
-        "onnxruntime-gpu==1.20.1"
+        "onnxruntime-gpu==1.20.1" \
+        "onnx>=1.16.0" \
+        "onnx2torch>=2.1.0"
 
     # facenet-pytorch: --no-deps で torch バージョン制約をスキップ
     # (2.6.0 は torch<2.3.0 を宣言しているが実コードは 2.5.x と互換)

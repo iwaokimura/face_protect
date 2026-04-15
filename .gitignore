@@ -1,0 +1,15 @@
+# モデルファイル（大容量・実行時にダウンロード）
+models/
+model.onnx
+*.sif
+
+# 出力画像
+output/
+*_protected.jpg
+*_protected.png
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/

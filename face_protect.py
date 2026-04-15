@@ -61,8 +61,9 @@ class ModelManager:
                     self._attack_models.append((f"facenet_{ds[:3]}", m))
             m3 = self._load_arcface_iresnet()
             if m3 is not None:
-                self._attack_models.append(("arcface_r50", m3))
-            if not self._attack_models:
+                self._attack_models.append(("arcface_r50", m3))            m4 = self._load_onnx_arcface()
+            if m4 is not None:
+                self._attack_models.append(("onnx_arcface", m4))            if not self._attack_models:
                 raise RuntimeError(
                     "攻撃モデルが1つもロードできません。"
                     " --download-models を先に実行してください。"
@@ -109,6 +110,29 @@ class ModelManager:
                 return None
         except Exception as e:
             print(f"[warn] ArcFace IResNet ロード失敗: {e}")
+            return None
+
+    def _load_onnx_arcface(self):
+        """InsightFace buffalo_l の w600k_r50.onnx を onnx2torch で変換してロードする。
+        --setup 実行後に models_dir/insightface/models/buffalo_l/ に存在する。"""
+        candidates = [
+            self.models_dir / "insightface" / "models" / "buffalo_l" / "w600k_r50.onnx",
+            Path("/opt/model.onnx"),
+            self.models_dir / "model.onnx",
+        ]
+        onnx_path = next((p for p in candidates if p.exists()), None)
+        if onnx_path is None:
+            print("[info] w600k_r50.onnx が見つかりません "
+                  "(--setup を先に実行してください) → スキップ")
+            return None
+        try:
+            import onnx as onnx_lib
+            import onnx2torch
+            model = onnx2torch.convert(onnx_lib.load(str(onnx_path)))
+            print(f"[model] ONNX ArcFace ロード: {onnx_path.name}")
+            return model.eval().to(self.device)
+        except Exception as e:
+            print(f"[warn] ONNX ArcFace ロード失敗: {e}")
             return None
 
     def download_all(self):
