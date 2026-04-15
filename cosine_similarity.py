@@ -152,6 +152,7 @@ def main():
 
     print("[info] InsightFace（ArcFace R100）初期化中...")
     app = load_app()
+    print("[info] 評価モデル: insightface/buffalo_l の normed_embedding")
     print("[info] 準備完了\n")
 
     if args.batch:
